@@ -12,6 +12,9 @@ Due to high variability in data types, it is likely the user will need to write 
 	- Standardized method for producing flat file text output
 	- Reading and writing to databases
 	- Writing netCDF's (likely with NCAR's pyNIO)
+	- support for pickled storage of already processed data
+	- methods to automatically determine a datatype for ingestion
+	- methods to more easily read text output files (non-pickled storage)
 	- probably more things
 
 This is written in python 2.6, and has been tested on Linux (Redhat 4.1.2) and Mac OSX 10.5. This package makes extensive use of numpy, and other packages traditionally packaged with the enthought python distribution. Should these be absent, some of the code will still work. Cython is not presently implemented.

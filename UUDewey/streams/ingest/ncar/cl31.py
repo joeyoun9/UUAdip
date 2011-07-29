@@ -9,14 +9,23 @@ Salt Lake City, Utah, USA
 
 Created under the NSF funding for the PCAPS project 2010 - 2013
 """
-import sys,time,datetime,calendar,array,os,UTDewey,math
-##import ceil_ave as aver
+
+import sys
+import time
+import datetime
+import calendar
+import array
+import os
+import math
+
+import uudewey
+
 # import numpy nicely
 try:
 	import numpy as np
 	from scipy.stats import nanmean,nanstd
 except:
-	print "This requires NumPy and SciPy to run, please visit numpy.scipy.org and cython.org to get it"
+	print "This requires NumPy and SciPy to run, please visit numpy.scipy.org to get it"
 	sys.exit()
 # as with all packages for the UTDewey data system, this should simply be a function that returns 
 # the data in the specialized format. Function MUST begin with the data request object (self)
@@ -42,7 +51,7 @@ def run (self, ddz=False, average=False, span=10, compute_raw=True, box_average=
 	X = array.array('i')
 	times = array.array('i') # with no span, this will be the same as x, but it will be deleted soon
 	Z = []
-	self.data.set('cl31',UTDewey.requestDataObject())
+	self.data.set('cl31',uudewey.RequestDataObject())
 	current_bin = 2
 	nm_pct = float(nm_pct) / 100.
 	if span:
@@ -225,94 +234,6 @@ def run (self, ddz=False, average=False, span=10, compute_raw=True, box_average=
 			#Zi.append(holder)
 			start = False # this stos me from adding extra info to info lines...
 
-
-	# now we need to flip Z because it is right now going across in height, and up in  time... very silly -- NOT ANYMORE!!
-#	self.log("flipping the array/matrix so it conforms with the plotting projection") 
-#	#Z = np.zeros((len(Y),obCount)) # since Z is always full, but X can vary with the span parameter, it is best to use obCount
-#	i = 0
-#	for r in Zi:
-#		c = 0
-#		for v in r:
-#			Z[c][i] = v
-#			c+=1
-#		i+=1
-#	Z = flip2d(Zi)
-#	del Zi
-		
-
-
-
-	# aah, all better, now, check what calculations need to be made
-	##i = 0
-	##Z_m = np.zeros((len(Y),len(X))) if average else False
-	##Z_d = np.zeros((len(Y),len(X))) if ddz else False
-	#if span and ( average or ddz ):
-	#	span_len = ((len(X) - len(X) % span) / span) + 1
-	#	Z_m = np.zeros((len(Y),span_len)) if average else False
-	#	Z_d = np.zeros((len(Y),span_len)) if ddz else False
-	#average = True if span else average -- average and span for now are seperate - and irrelevant compared to what comes next
-	""" ############ THIS IS WHERE THE CYTHON CAN DO STUFF  ###################
-	x_m = aver.average_ceil(self,Z,X,0,span,20,len(X),len(Y),"average")
-	
-	"""
-	"""
-	if ddz or average:
-		print "computing means and differentials"
-		for l in Z:
-			t = -1
-			t_c = 0
-			self.log("averaging for level",i)
-			#count = span / 2  if span else 0 # count set to span/2 so the point is always in the middle of a span
-			for tm in l:
-				# in time we are going to average over span units, and only return on at the center point...
-				t+=1
-				if span and t not in span_index:
-					continue
-				# figure out what the average is, if span it is 1/2 the distance between the two markers (using eralier times only)
-				if span:
-				# avearge is the length betwween this key and the prev in span_index	
-					average = (span_index[t_c] - span_index[t_c - 1] ) / 2 if t_c > 0 else span_index[0]
-				# if span, we are going to average over that 
-				h_beg = t - average if t- average >0 else 0
-				h_end = t+ average if t+ average <len(l) else len(l) - 1
-				v_beg = i - average if i - average > 0 else 0
-				v_end = i + average if i + average < len(Z) else len(Z) - 1 
-				d_beg = i - ddz if i - ddz > 0 else 0
-				d_end = i + ddz if i + ddz < len(Z) else len(Z) - 1 
-				if average and int(average):
-					a = []
-					# average over a box if box_average = True, else just avearge in a cross
-					if box_average:
-						for z in Z[v_beg:v_end]:
-							a.append(sum(z[h_beg:h_end])/len(z[h_beg:h_end])) # horizontal in the vertical
-						c = len(a) if len(a) else 1
-						Z_m[i][t_c] = np.log10(( sum(a)/c )  ) if compute_raw else ( sum(a)/c )
-					elif cross_average:
-						b = l[h_beg:h_end] # horizontal
-						c = len(b) if len(b) else 1
-						h_ave = sum(b)/c
-						for z in Z[v_beg:v_end]:
-							a.append(z[t]) # just append the value, not the horizontal mean
-						v_ave = sum(a)/len(a) if len(a) else sum(a)
-						ave = ( h_ave + v_ave ) / 2 # ave the averages to get the crosswise average
-						Z_m[i][t_c] = np.log10(ave) if compute_raw else ave
-					else:
-						# if they are still averaging, without box or cross, then we do straight horizontal
-						b = l[h_beg:h_end] # horizontal
-						c = len(b) if len(b) else 1
-						Z_m[i][t_c] = np.log10(sum(b)/c) if compute_raw else sum(b)/c
-						
-				# compute d/dz over a range of ddz. Vertical only
-				if ddz and int(ddz):
-					Z_d[i][t_c] = np.log10(Z[d_beg][t] - Z[d_end][t]) if compute_raw else Z[d_beg][t] - Z[d_end][t] 
-						# gives hella errrors for 0 and - numbers
-				t_c+=1
-			i+=1
-	
-	"""
-	
-	# new plan! 
-
 	# convert the bins to lists in the clouds
 	if clouds:
 		for h in range(1,4):
@@ -443,41 +364,13 @@ def run (self, ddz=False, average=False, span=10, compute_raw=True, box_average=
 						out[b][z] = nanmean(values)
 
 		# now before we leave this column, if ddz is mandated, calculate it quickly and efficiently
-		if not ddz and not ddz > 1: continue
-		"""
-		temp = []
-		for z in range(len(out[b])):
-			top = z + ( ddz + ddz % 2 ) / 2
-			bottom = z - ( ddz + ddz % 2 ) /  2 
-			if top > len(Y) - 1: top = len(Y) - 1
-			if bottom < 0: bottom = 0
-			temp.append( ( out[b][top] - out[b][bottom] ) / ( GATE_HEIGHT * (top - bottom) ) )
-		"""
+		if not ddz and not ddz > 1:
+			continue
 		if not ddz_extra:
 			out[b] = swap_inf(np.gradient(out[b]),1e11)
 		else:
 			out2[b] = swap_inf(np.gradient(out[b]),1e11)
 			
-	"""
-	# average the cloud bins - somewhat independent of the -999s!
-	if clouds:
-		for h in range(1,4):
-			cloud_bin = self.data.ceil.clouds[h][b]
-			#FIXME - if there are nans in this, we should test if there are more nans than good values, if so, then nan
-			if len(cloud_bin): #float('nan') in cloud_bin:
-				val = float('nan') # start with the default - the median value
-				su = 0
-				su_cnt = 0
-				for value in cloud_bin:
-					if not np.isnan(value):	
-						su += value
-						su_cnt += 1
-				val = sum(su)/su_cnt if su_cnt / len(cloud_bin) > .2 else val # ie, get the average, if more than 20% of the values are not nan
-				self.data.ceil.clouds[h][b] = val
-			else:
-				self.data.ceil.clouds[h][b] = float('nan')
-	"""			
-
 	# //// IF MAKE_FILE HERE IS WHERE WE DO IT - since the Zi is exactly what we want to save, even in that order
 	# makefile will use the raw data, scaled or unscaled as specified, so write it, save it, and return True on success
 	if make_file:

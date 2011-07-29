@@ -28,7 +28,12 @@
 """
 
 
-import time, os, sys, calendar, array, math 
+import time
+import os
+import sys
+import calendar
+import array
+import math 
 from math import degrees, atan2
 from time import strftime, gmtime
 from datetime import tzinfo,timedelta,date
@@ -37,6 +42,7 @@ from xml.dom.minidom import parse
 
 from . import version as vers
 
+
 version = vers.get_version()
 bounding_box = []
 verbose = True
@@ -44,7 +50,7 @@ class DataFetch:
 	"""All data requests will work through the DataRequest Object"""
 	def __init__(self, project, date_range, *args, **keywords ):
 		# this will evaluate their request and will initialize the request object for the transmission at a later time
-		self.data = requestDataObject()
+		self.data = RequestDataObject()
 		for kw in keywords:
 			# there are several types of keyword I accept: the raw_file argument, means it copies the raw file if possible
 			# the make_file argument specifies wether or not I simply spit out data, or do I save
