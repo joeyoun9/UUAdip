@@ -1,0 +1,840 @@
+<?xml version='1.0' ?>
+<document>
+<!--MANUAL to UTDewey - April 2011. ALSO working as a test of the XML man system -->
+<desc>
+	The UTDewey module was created as a way to organize and fetch observational data from the PCAPS field project Dec 2010 - Feb 2011 in the Salt Lake Valley of Utah.
+This system is entirely coded in Python, and uses 3 core modules, which perform seperate tasks. 
+
+The UTDewey module is implemented for coordination of streams and requests. The main power of this module is to synthesize date ranges into a single form, readable by sub functions, its ability to read project configuration files, and its ability to locate raw data files for the stream processors to use. - In the future this module will have the capability to determine what data format the raw data is in, so there is no further need to specify a specific stream processor. Though individual stream processors will always be needed.
+
+The streams module contains the code for processing different data formats. Any data format can be processsed as long as there is a sufficient codebase. The streams module is broken into 2 seperate modules: ingest and format. Ingest has the ability to take disjointed raw data files, and synthesize them into a single complete data set (with minor fundamental adjustments/averaging at times). Format is a more vague module, which has not yet been implemented.
+
+The metcalcs module is for calculations which are generally not included in standard mathematical packages, but are used frequently in the meteorological work which this codebase is based on. Different stream processors use many of the functions defined in metcalcs, simply so they do not have to be re-coded. In the future, this may be expanded to calculations outside of meteorology, in which case the name will likely be changed to scicalcs. Calculations can be very intenive, but they must be independent, and work only on their given inputs, and produce only output.
+
+Future modules may come into existance, however that has not happened yet. Current version of UTDewey package is 2.1.0 , 10 May 2011.
+</desc>
+<module name="UTDewey">
+	<desc>A Package for organizing project data, fetching, and processing in a simplified, standardized, and robust environment.</desc>
+	<property name="version" type="str">
+		<desc>The current package version</desc>
+	</property>
+	<property name="verbose" type="VerboseObject">
+		<desc>An object for declaring verbose operation within some of the classes in the project.</desc>
+	</property>
+	<property name="bounding_box" type="list">
+		<desc>A two dimenstional list which holds the bounds defined for the project. This is a property of the module, becuse the in_lat() And in_lon() functions use it, but they are not contained within a class.</desc>
+	</property>
+	<method name="getText" type="void">
+		<desc>Python method to grab the text from XML nodes</desc>
+		<input name="nodes" type="XMLNodeList">
+			<desc>A list of child nodes which have text values to be read</desc>
+		</input>
+	</method>
+	<method name="dump" type="str">
+		<desc>A utility function to print out the contents of an object. For analysis purposes.</desc>
+		<input name="obj" type="Python Object">
+			<desc>The object to be examined.</desc>
+		</input>
+	</method>
+	<method name="newAxis" type="void">
+		<desc>Not Currently Implemented</desc>
+	</method>
+	<method name="_3hourticks" type="void">
+		<desc>Not Currently Implemented</desc>
+	</method>
+	<method name="yaxis" type="void">
+		<desc>Not Currently Implemented</desc>
+	</method>
+	<class name="requestDataObject">
+		<init type="DataObject">
+			<desc></desc>
+			<!-- no arguments, just self, which is a default in a class method/init -->
+		</init>
+		<method name="set">
+			<desc></desc>
+			<input name="key" type="str">
+				<desc></desc>
+			</input>
+			<input name="value" type="">
+				<desc></desc>
+			</input>
+		</method>
+	</class>
+
+	<class name="DataRequest">
+		<init type="DataRequest Object">
+			<desc></desc>
+			<input name="project" type="str">
+				<desc></desc>
+			</input>
+			<input name="date_range" type="str">
+				<desc></desc>
+			</input>
+			<input name="*args">
+				<desc></desc>
+				<arg name="verbose" type="VerboseObject">
+					<desc></desc>
+				</arg>
+			</input>
+			<input name="**kwargs">
+				<desc></desc>
+				<!-- FIXME - i am not sure any kwargs are actually working right now -->
+				<arg name="??" type="">
+					<desc></desc>
+				</arg>
+			</input>
+		</init>
+
+		<property name="data" type="DataObject">
+			<desc></desc>
+		</property>
+		<property name="data.begin" type="int">
+			<desc></desc>
+		</property>
+		<property name="data.end" type="int">
+			<desc></desc>
+		</property>
+		<property name="data.begintime" type="StructTime">
+			<desc></desc>
+		</property>
+		<property name="data.endtime" type="StructTime">
+			<desc></desc>
+		</property>
+		<property name="data.pname" type="str">
+			<desc></desc>
+		</property>
+		<property name="data.pid" type="str">
+			<desc></desc>
+		</property>
+		<property name="data.project" type="str">
+			<desc></desc>
+		</property>
+		<property name="dateString" type="str">
+			<desc>A dynamic string created from the date range processing of the format \[%d %b %Y %H%M UTC - %d %b %Y %H%M UTC\]</desc>
+		</property>
+		<property name="dateInput" type="str">
+			<desc>The string input to the class constructor as \[date_range\]</desc>
+		</property>
+		<property name="verbose" type="VerboseObject">
+			<desc></desc>
+		</property>
+
+		<method name="update" type="void">
+			<desc></desc>
+			<input name="project" type="str">
+				<desc></desc>
+			</input>
+			<input name="date_range" type="str">
+				<desc></desc>
+			</input>
+			<input name="clean" type="bool" default="True">
+				<desc></desc>
+			</input>
+			<input name="*args">
+				<desc></desc>
+			</input>
+			<input name="**kwargs">
+				<desc></desc>
+			</input>
+		</method>
+		<method name="get" type="variable">
+			<desc></desc>
+			<input name="package" type="str">
+				<desc></desc>
+			</input>
+			<input name="**kwargs">
+				<desc></desc>
+			</input>
+		</method>
+		<method name="find_files" type="list">
+			<desc>Use the sepecified directory from the XML config file to find all teh raw data files of a certain type.
+
+This is largely meant for use by stream processors, but it is available to the wider users.</desc>
+			<input name="stream" type="str">
+				<desc></desc>
+			</input>
+			<input name="ext" type="str/list/dict">
+				<desc>The extension/file format we should look for. There are 3 formats which this can be done:\(
+	1. string      : file name must contain string. eg: ".ptu" will return abcfilename.ptu, but will not return abcfilename.gps
+	2. list        : list of strings, all of which must be in the filename
+				eg: ['ceil_','.DATA'] will return ceil_231.DATA, but not ceil_231.DAT
+	3. dictionary : provides include and exclude list options, as well as specify length of filename,
+				for increased search cabability.
+			Available keys:
+			'includes' : [] 		Strings that MUST BE in the filename
+			'excludes' : []			Strings that MUST NOT be in the filename
+			'length'   : int		set the width of the filename you want 
+							eg 'length':10 will return 12345678.9 but not 012345678.9
+\)
+</desc>
+			</input>
+			<input name="aux" type="bool">
+				<desc></desc>
+			</input>
+			<input name="allow_repeats" type="bool">
+				<desc></desc>
+			</input>
+		</method>
+		<method name="log" type="void">
+			<desc></desc>
+			<input name="*message">
+				<desc></desc>
+			</input>
+		</method>
+		<method name="flip2d" type="list">
+			<desc></desc>
+			<input name='wrong'><desc></desc>
+			</input>
+		</method>
+		<method name="in_lat" type="bool">
+			<desc></desc>
+			<input name="lat" type="float">
+				<desc></desc>
+			</input>
+		</method>
+		<method name="in_lon" type="bool">
+			<desc></desc>
+			<input name="lon" type="float">
+				<desc></desc>
+			</input>
+		</method>
+		
+	</class>
+	<class name="mstTZ" type="tzinfo">
+		<init>
+			<desc>A simple tzinfo definition, which extends the soft class datetime.tzinfo so that Mountain Standard Time can be applied to plotting</desc>
+			<input name="tzinfo" type="tzinfo Object">
+				<desc>input datetime.tzinfo so this class can expand on it.</desc>
+			</input>
+		</init>
+		<method name="tzname" type="str">
+			<desc>A required method of the tzinfo object, returns string version of the time zone</desc>
+			<input name="dt" type="timedelta Object">
+				<desc>I do not undersand this, but when working on a tzinfo object, dt is always passed</desc>
+			</input>
+		</method>
+		<method name="utcoffset" type="timedelta">
+			<desc>A required method of the tzinfo object, returns the offset from UTC as a timedelta object</desc>
+			<input name="dt" type="timedelta Object">
+				<desc>I do not undersand this, but when working on a tzinfo object, dt is always passed</desc>
+			</input>
+		</method>
+		<method name="dst" type="timedelta">
+			<desc>A required method of the tzinfo object, returns the timedelta corresponding to the current DST offset. Always returns 0 for MST only</desc>
+			<input name="dt" type="timedelta Object">
+				<desc>I do not undersand this, but when working on a tzinfo object, dt is always passed</desc>
+			</input>
+		</method>
+		
+	</class>
+</module>
+
+
+<module name="streams">
+	<desc></desc>
+	<module name="ingest">
+		<desc></desc>
+
+		<module name="asc_minisodar">
+			<desc>Not Currently Implemented</desc>
+		</module>
+
+		<module name="ceilometer_lidar_processed">
+			<desc>Not Currently Implemented</desc>
+		</module>
+
+		<module name="graw_rawinsondes">
+			<desc>A module for processing raw and processed GRAW upsonde observations</desc>
+			<method name="run" type="void">
+				<desc>Process GRAW rawinsondes. This ingester can read either raw .GD and .GDP files from the rawinsondes, or it can read processed files. If reading processed files, it attempts to understand which data has been plotted, since different configs of the grawmet software create different collections of variables. Outputs are standardized, so whichever version you are using, you should get a similar output. Outputs are made to the data object as part of the requets object (obj) called obj.data.graw_doundings. 
+
+The first key will be the individual sounding, so the more soundings that are found, they will be added as new keys to the first index. ie obj.data.graw_soundings[0] is the first sounding, obj.data.graw_soundings[1] is the second, and so on. The second index is the data type. Each type is broken into a text-identified index, and each index contains the entire profile for that specific variable. As such, the length for all lists besides the 'init' list should be the same.
+
+\(
+
+'info' - NOTE this key is not currently available.
+'time' - the UTC time for all observations in unix epoch time
+'keys' - a list of the keys referring to the exact same point in every other list.
+'tc'   - temperature profile in celsius
+'tdc'  - dewpoint temperature profile in celsius
+'rh'   - relative humidity profile
+'tv'   - The virtual temperature profile
+'q'    - The specific humidity profile
+'p'    - pressure profile in hPa?
+'wdir' - wind direction profile
+'wspd' - wind speed profile
+'lat'  - balloon decimal latitude along profile
+'lon'  - balloon decimal longitude along profile
+'z'    - balloon AMSL height in m from GPS (may not be AMSL)
+\)
+
+				</desc>
+				<input name="self" type="DataRequest Object">
+					<desc>A copy of the main DataRequest, a resource for saving data, as well as access to available utilities as part of the DataRequest Object</desc>
+				</input>
+				<input name="site" type="str" default="False">
+					<desc>Specify a string to search for in the 'sounding site' key. Spaces and case are not important</desc>
+				</input>
+				<input name="proc" type="bool" default="False">
+					<desc>Use GRAW processed text files instead of processing from raw - can be much quicker, and potentially more accurate at times</desc>
+				</input>
+				<input name="wind_averaging" type="int" default="20">
+					<desc>If processing raw files, the number of observations over which to average position to determine wind speed and direction. Used as a running sample.</desc>
+				</input>
+				<input name="cutoff" type="bool" default="True">
+					<desc>When the code detects that the balloon is now descending/falling, to stop sending the data, as return fall data is not considered as accurate.</desc>
+				</input>
+				
+			</method>
+		</module>
+
+		<module name="mesowest">
+			<desc>Not Currently Implemented</desc>
+		</module>
+
+		<module name="ncar_iss_rawinsondes">
+			<desc>Module for ingesting NCAR ISS GAUS Upsondes</desc>
+			<method name="run" type="void">
+				<desc>Process NCAR ISS Rawinsonde D files. Produced directly from the ISS-GAUS system. Outputs are saved to the data object within the DataRequest object, under data.iss_soundings.
+
+The first key will be the individual sounding, so obj.data.iss_soundings[0] is the first sounding found in the time period. Soundings are organized chronologically. Within each sounding, the profile data is sorted into text-orderd lists of all the data from the profile through the EOF or cutoff. These keys are:\(
+
+'info' - is not a whole profile, but initialization information {'launch':[launchtime]} is the only information in there currently
+'time' - the UTC time for all observations in unix epoch time
+'keys' - a list of the keys referring to the exact same point in every other list.
+'tc'   - temperature profile in celsius
+'tdc'  - dewpoint temperature profile in celsius
+'rh'   - relative humidity profile
+'p'    - pressure profile in hPa?
+'wdir' - wind direction profile
+'wspd' - wind speed profile
+'vvel' - vertical velocity profile
+'lat'  - balloon decimal latitude along profile
+'lon'  - balloon decimal longitude along profile
+'gp'   - balloon geopotential height in m
+'z'    - balloon AMSL height in m from GPS
+\)
+
+Thus, obj.data.iss_soundings[0]['tc'][224],obj.data.iss_soundings[0]['p'][224] and obj.data.iss_soundings[0]['z'][224] will return the temp, pressure, and z from sounding 0, at the 224th observation. There is currently no height interpolation available. However in the future, when this is implemented, then you can compare the 224th ob across all soundings that are found to see temporal variations. 
+				</desc>
+				<input name="self" type="DataRequest">
+					<desc>A copy of the main DataRequest, a resource for saving data, as well as access to available utilities as part of the DataRequest Object</desc>
+				</input>
+				<input name="cutoff" type="bool" default="True">
+					<desc>When the code detects that the balloon is now descending/falling, to stop sending the data, as return fall data is not considered as accurate.</desc>
+				</input>
+				<input name='qc' type='bool' default='True'>
+					<desc>Read the NCAR EOL type 1.0 Quality Controlled sounding data. This reads from the \[location\] tags by default. So non-qc'd data should be located in the \[aux\] tag in the config XML</desc>
+				</input>
+			</method>
+		</module>
+
+		<module name="ncar_vaisala_ceilometer">
+			<desc>This module enables the ingestion of Vaisala CL31 data type raw ceilometer messages.</desc>
+
+			<method name="run" type="tuple: X,Y,Z">
+				<desc>The function to ingest ceilometer data. This ingestor does a quck average or ddz computation on the data. In the returned data, Z is always of len(Z) = len(Y) and len(Z[n]) = len(X). 
+This is reversed from the way it goes into the list, because the way plotting works, it has to correspond with the Y values. Y is a list of elevations for 
+every gate. All gates are always presetnt. X is a list of epoch times (long ints) corresponding to the average time for each bin used.</desc>
+				<input name="self" type="DataRequest Object">
+					<desc>A copy of the main DataRequest, a resource for saving data, as well as access to available utilities as part of the DataRequest Object</desc>
+				</input>
+				<input name="average" type="int" default="False">
+					<desc>Length of time in minutes to perform a running average - DEPRECATED - use span instead</desc>
+				</input>
+				<input name="ddz" type="int" default="False">
+					<desc>Distance in vertical gates to compute the rate of change, in a running form (works with span)</desc>
+				</input>
+				<input name="span" type="int" default="5">
+					<desc>Length of time in minutes during which a centered average should be computed. This thins the data set by a factor of span. X time values will correspond to the middle of the span indicator. Spans are computed from time bins, so there are assured to be length of plot in minutes/span bins, however, -999 will be present if there were no values within the aforementioned bin.</desc>
+				</input>
+				<input name="compute_raw" type="bool" default="True">
+					<desc>Use raw un logged data to compute spans, or log10'd data. 
+NOTE - this does not work with DDZ, as the log cannot be taken of a negative number. </desc>
+				</input>
+				<input name="box_average" type="bool" default="False">
+					<desc>Average in time and space using whole time range for all spatial (vertical) observations. Can be computationally intensive. If both box_average and cross_average are declared, box_average wins.</desc>
+				</input>
+				<input name="cross_average" type="bool" default="False">
+					<desc>Average in time and space, but only at current time for spatial, and only at the current height (space) for temporal averaging. Creates a cross like pattern.</desc>
+				</input>
+				<input name="upper_limit" type="float" default="550000.">
+					<desc>Highest scaled (raw CL31 output) value accepted as non-noise. Values can be expected up to 1.1 million</desc>
+				</input>
+				<input name="lower_limit" type="float" default="6.3">
+					<desc>Lowest scaled (raw CL31 output) values accepted as observations. All lower values will be replaced with lower_limit value.</desc>
+				</input>
+				<input name="max_height" type="int" default="3500">
+					<desc>Furthest (highest) range in meters (m) you want to receive data from.</desc>
+				</input>
+				<input name="ceil_buffer" type="int" default="300">
+					<desc>Time in seconds on each end of the ceilometer data fetch whihc you want to receive data. Since ceilometers do not measure on fixed clock intervals, a small buffer is recommended to ensure the presence of data at the beginning and end of a time period.</desc>
+				</input>
+				<input name="scaled" type="bool" default="False">
+					<desc>Should values be left in their Vaisala CL31 format, which is 1*E(9) * val, Providing all positive logs (log10 is 9 greater than true.)</desc>
+				</input>
+				<input name="make_file" type="str" default="False">
+					<desc>Produce a text file of the data, instead of returning python/NumPy elements. Set to the name of the directory in which you want to place made files. If there is no span defined, then this will save the raw Z data, with a total number of columns len(Y) + 1 and a total number of rows len(X) + 1.</desc>
+				</input>
+				<input name="make_file_name" type="str" default="False">
+					<desc>The name of the file you wish to place in the directory specified by make_file. If left blank or False, 'ceilometer_raw.DAT' will be used</desc>
+				</input>
+				<input name="make_file_raw" type="bool" default="False">
+					<desc>Not Currently Implemented</desc>
+				</input>
+				<input name="still_plot" type="bool" default="False">
+					<desc>Should the code continue and still return python objects after creating a text file for the request. Allows plots to be made of data at the same time as the saved raw file. </desc>
+				</input>
+				<input name="ddz_extra" type="bool" default="False">
+					<desc>Set this to True to allow returns of both ddz and backscatter
+	if selected, return will now be X,Y,Z,DDZ
+</desc>
+				</input>
+				<input name="clouds" type="bool" default="False">
+					<desc>When set to True, set the data attribute to an array called 'ceil_clouds' which is simply an array
+					corresponding to X in time with values of the first, second, and third cloud heights detected.
+Format:\(
+	DataRequest obj.data.ceil.clouds[1] = [array of heights of first deck]
+	DataRequest obj.data.ceil.clouds[2] = [array of heights of second deck]
+	DataRequest obj.data.ceil.clouds[3] = [array of heights of third deck]
+	
+\)
+
+</desc>
+				</input>
+				<input name="no_bs" type="bool" default="False">
+					<desc>True if you do not want to receive backscatter data. If used without \[clouds=True\], 
+the code will essentially do nothing.
+
+This will modify the output. The function will now return \[X\] only, no tuple. If clouds are requested, they will be saved in their normal way.
+
+Can be a good tool to check your connection to the files without running the full program
+</desc>
+				</input>
+				<input name='nm' type='bool' default='False'>
+					<desc>Use the SciPy NanMean function for averaging. When using NaN's as the low or high value, any mean of a bin, if a nan is present, will result in a nan. Using NaNmean will allow the mean to be that of the remaining non-NaN values. See nm_pct below for to specify further. On  it's own NaNmean will almost always return a value except where the value is always NaN in the bin.</desc>
+				</input>
+				<input name='nm_pct' type='int' default='False'>
+					<desc>Only when using nm (NaNmean), the code will calculate the percentage of the bin-gate which is nans, and if it exceeds the value entered as nm_pct, nan is reutrned. Example:\(
+	Bin: [nan, nan, nan, nan, 5.4]
+	if nm = True, and nm_pct = False:
+		return is 5.4
+	if nm_pct = 19:
+		return = 5.4
+	if nm_pct =(or gt) 20:
+		return is nan 
+\)</desc>
+				</input>
+				<input name='plot_levels' type='int' default='45'>
+					<desc>The returned varaible \[self.data.cl31.plot_levels\] can specify the plotting levels for this variable, with the specified number of levels</desc>
+				</input>
+				<input name='stdev' type='bool' default='False'>
+					<desc>Use standard deviation to evaluate wether an ob is noise, currently under development</desc>
+				</input>
+				<input name='minimum' type='bool' default='False'>
+					<desc>Instead of computing mean, return the minimum value for the bin/gate. has a similar effect to using nans but not nanmean.</desc>
+				</input>
+			</method>
+			<method name="flip2d" type="NumPy 2-D Array">
+				<desc>A quick utility to flip ceilometer data from a heightxtime array to a time x height, which is how it is plotted/conceputally understood</desc>
+				<input name="wrong" type="2-D list/Array">
+					<desc>The 2 dimensional array to be flipped</desc>
+				</input>
+			</method>
+		</module>
+
+		<module name="nws_rawinsondes">
+			<desc>Ingest NWS Upsondes located in the directory specified in the configuration file.</desc>
+			<method name="run" type="void">
+				<desc>Process archived NWS GPS Sonde Products. These files are the .PTU and .GPS files which can be acquired via NCDC.
+The contents of the file is a semi-smoothed, and highly QC'd version of the upsonde profile acquired at the nominal time of launch. Launch times are differnt from timestamps on the profiles. The output is a standard profile output, wihich is saved internally at this time to the variable \[requestObject.data.nws \] where the first index will be the specific sounding, and the subsequent indices will be the profiles. This is similar to other profiles. Here are the indices: \(
+
+'info' - is not a whole profile, but initialization information {'launch':[launchtime]} is the only information in there currently
+'time' - the UTC time for all observations in unix epoch time
+'keys' - a list of the keys referring to the exact same point in every other list.
+'tc'   - temperature profile in celsius
+'tdc'  - dewpoint temperature profile in celsius
+'rh'   - relative humidity profile
+'p'    - pressure profile in hPa?
+'wdir' - wind direction profile
+'wspd' - wind speed profile
+'u'    - Meridonal wind component
+'v'    - Zonal wind component
+'lat'  - balloon decimal latitude along profile
+'lon'  - balloon decimal longitude along profile
+'gp'   - balloon geopotential height in m
+'z'    - balloon AMSL height in m from GPS
+
+\)
+KNOWN ISSUES - these profiles are unnessecarily smoothed, work is being done to find better profiles from these soundings, however this ist the best currently. Also, some profiles do not get stored by accident, as a result they are not always available. Other file formats are available for this, however, the code does not currently search for 'expected' soundings, so it does not know when someone is missing.
+				</desc>
+				<input name="self" type="DataRequest Object">
+					<desc>A copy of the main DataRequest, a resource for saving data, as well as access to available utilities as part of the DataRequest Object</desc>
+				</input>
+				<input name="station" type="list" default="False">
+					<desc>Not Currently Implemented</desc>
+				</input>
+				<input name="horel_data" type="bool" default="True">
+					<desc>Use the /aux data source, and assume the horel cpin formatting. This is very project specific</desc>
+				</input>
+			</method>
+		</module>
+		<module name="uu2dvar">
+			<desc>Ingestor for University of Utah 2D-Variational Data Assimilation System Data Files</desc>
+			<method name="run" type="Lats,Lons,Vals">
+				<desc>Read NetCDFs from the data assimilation system, hopefully centered on the area of interest.(TODO!)
+				Returns a Lat/Lon grid of the data values requested. See the 'product' input for available options (as of PCAPS 2011)
+				</desc>
+				<input type="DataRequest" name="self"><desc>A copy of the main data request.</desc></input>
+				<input type="string" name="product">
+					<desc> Specify the product you wish to have returned with on the lat/lon grid.
+					Options are \(
+netcdf nc.variables.key():
+['rtma_2m_ptmp', 
+'anl_10m_vwnd_inc', 
+'anl_10m_vwnd', 
+'bkg_2m_dewp', 
+'rtma_2m_dewp_inc', 
+'anl_sf_pres_inc', 
+'rtma_10_uwnd', 
+'rtma_10m_vwnd_inc', 
+'anl_2m_ptmp_inc',
+ 'anl_2m_temp', 
+'rtma_10m_vwnd', 
+'anl_10m_uwnd_inc', 
+'latitude', *
+ 'rtma_sf_pres', 
+'bkg_2m_temp', 
+'rtma_2m_ptmp_inc', 
+'elevation', 
+'anl_2m_dewp_inc', 
+'bkg_2m_ptmp', 
+'rtma_2m_dewp', 
+'rtma_2m_temp_inc', 
+'bkg_10m_uwnd', 
+'anl_2m_ptmp', 
+'anl_2m_temp_inc', 
+'rtma_2m_temp', 
+'anl_sf_pres', 
+'rtma_sf_pres_inc', 
+'anl_10_uwnd', 
+'rtma_10m_uwnd_inc', 
+'longitude', *
+'bkg_10m_vwnd', 
+'anl_land_mask', 
+'time',** 
+'y',** 
+'x',**
+'bkg_sf_pres', 
+'anl_2m_dewp']
+					\)
+					* This is not available for a 2-d grid
+					** this likely does not come in 2-d grid, and it will have to be further examined
+
+					Any of these can be entered, though, the results may be mixed, as not all fields have actually been tested.
+				</desc></input>
+			</method>
+		</module>
+		<module name="ncar_iss_915_rwp">
+			<desc>Ingestor for NCAR ISS 915MHz Radar Wind Profiler</desc>
+			<method name="run" type="T,Z,U,V tuple">
+				<desc></desc>
+				<input type="DataRequest" name="self"><desc>A copy of the main data request.</desc></input>
+				<input type="" name=""><desc></desc></input>
+			</method>
+		</module>
+		<module name="ncar_iss_915_rass">
+			<desc>Ingestor for NCAR ISS 915MHz RASS Profilers</desc>
+			<method name="run" type="T,Z,Tv">
+				<desc></desc>
+				<input type="DataRequest" name="self"><desc>A copy of the main data request.</desc></input>
+				<input type="" name=""><desc></desc></input>
+			</method>
+		</module>
+
+	</module>
+	<module name="format">
+		<desc>A module for working with the data streams. This includes only significant operations, as most operations are application specific, and will only be included here if I was doing them, and they were needed across numerous sub-scripts. These can and should be infinitely expanded.</desc>
+		<module name="ncar_vaisala_ceilometer">
+			<desc>Formatting tools for ceilometer data.</desc>
+			<module name="algorithms">
+				<desc>At present, the contents of this directory are not public</desc>	
+			</module>
+		</module>
+		<module name='rass'>
+			<desc>Tools for working with RASS data.</desc>
+			<module name='rass2prof'>
+				<desc>Tools for converting RASS timeseries data into sounding-like profiles</desc>
+				<method name='r2p' type='void'>
+					<desc> Convert supplied timeseries data, ideally from RASS, but any comparably formatted data will work.
+And convert it into profiles of averaged data every [span] minutes. Spans where no data is found, or not enough to produce a profile (\[{ob nan nan ob}\] will not be a valid profile) will return false. Data are saved to the request data object under \[ self.data.rass_prof \] in a similar format to other soundings.
+\(
+self.data.rass_prof = [list of profiles]
+	profile = {
+		'tv': profile of averaged values from V input, since it is a RASS, virtual temperature is assumed
+		'init' : {time: profile epoch time [float]}
+	}
+\)
+					</desc>
+					<input name='self' type='DataRequest'>
+						<desc>The request object used to call the RASS data provided below. Outputs are saved to this object</desc></input>
+					<input name='span' type='int'><desc>Time in minutes between profiles. This specifies the averaging length for the profiles. Many RASS systems observe on a time scale of ~30 minutes.</desc></input>
+					<input name='T' type='list'><desc>List of times in epoch time. Corresponding to the first dimension of V</desc></input>
+					<input name='Z' type='list'><desc>List of heights corresponding to the second dimension of V</desc></input>
+					<input name='V' type='list'><desc>2 dimenisional matrix of values of shape \[len(T),len(Z)\]</desc></input>
+				</method>
+			</module>
+		</module>
+		<module name="profiles">
+			<module name="plotConvert">
+				<method name="c2t" type="dict">
+					<desc>Convert temperatures into timeseries-stable times so that they can be overlayed on timeseries. Also provides skewing, offsetting, and time and values for any colorbar which could be desired.
+Data are returned in a simple dictionary structure:
+\(
+return = {
+		'values': [plottable list, the same length as the input v, alternative axis (ie. Z) should correspond],
+		'colorbar': [plottable list of 2 points, which can be plotted to create an inline temperature axis]
+		'skew lines' [list of lists, of skwew_distance degrees apart corresponding to lines of temperature 
+			skew +/- 2 hours in time from the sounding time]
+	}
+\)
+					</desc>
+					<input name="self" type="DataRequest"><desc>A copy of the DataRequest object, used for global function access.</desc></input>
+					<input name="t" type="int"><desc>Time of the profile, point on the timeseries the profile should originate from 
+						(not counting offsets, see below)</desc></input>
+					<input name="v" type="list"><desc>List of values to be converted. Output profile will be the same size as v</desc></input>
+					<input name="var" type="str"><desc>Variable used, can be used to specify length of time per unit. Variables correspond to keys of \[conversions\] dict, so the default values are the only ones available unless you modify the time_conversions dictionary.</desc></input>
+					<input name="conversions" default="default_time_conversions" type="dict">
+						<desc>A dictionary categorizing how many seconds per whole integer unit are used when computing the timeseries-temperature value.
+The default dictionary (shown below) can be modified, but if so, it must be passed to the method as this keyword argument. As well, a completely new dictionary can be written and passed. The dictionary are simply key:value pairs where the key is the variable, identical to what is passed to var, and the value is a number in seconds, which constitute one integer unit. Thus, if the value is 1000, 15 units will correspond to time 0, 16.5 units will correspond to time 1500.
+
+Example:
+\(
+default_time_conversions = {
+	'tc' : 1000,
+	'tf' : 800,
+	'rh' : 900,
+}
+\)</desc>
+					</input>
+					<input name="z" type="list" default="False">
+						<desc>
+							if a SKEW should be applied to these values, then this should have a list of elevations AMSL passed. \[len(z) = len(v)\]. If no skew should be applied, leave this value \[False\]
+						</desc></input>
+					<input name="offset" type="int or list" default="False"><desc>Produce an offset from another variable such that only one line originates from the initial point, and all other lines originate relative to that first line. Though each line must be called (and plotted) individually, this can be used to define the anchor line, from which other lines are offset. The result is that when two temperature lines are plotted, and one is offset from the other, both temperature lines are plotted on the same temperature scale. An example of this is a temperature trase from a sounding, and then a dewpoint trace, you would pass the temperature trace as the offset variable, so the two lines are plotted on the same axis.
+
+You can also enter a float number for the initial offset, this simply skips the processing of the provided profile. This number should correspond to the number of [val] units away the new line should be from the initialization axis. ie the surface dewpoint depression is 5K, so enter 5.  </desc></input>
+					<input name="colorbar_degrees" type="int" default="10"><desc>Not Currently Implemented</desc></input>
+					<input name="skew_distance" type="int" default="15"><desc>Not Currently Implemented</desc></input>
+				</method>
+			</module>
+		</module>
+	</module>
+</module>
+
+
+<module name="metcalcs">
+	<desc>A collection of modules enabling the calculation of meteorological parameters. Colsolidating calculations into one codebase.</desc>
+
+	<module name="sounding">
+		<desc>A collection of calculations to help with plotting soundings, and particularly the parameters of a Skew-T plot</desc>
+		<method name="rh2td" type="float">
+			<desc>Convert a relative humidity observation, to a dewpoint, using an approximation calculation</desc>
+			<input name="t" type="float"><desc>Temperature in the unit specified by kc</desc></input>
+			<input name="rh" type="float"><desc>Relative humidity in %</desc></input>
+			<input name="kc" type="str"><desc>"k" if the temperature is input in Kelvin, else temperature is assumed in C</desc></input>
+		</method>
+		<method name="sounding_dewpoint" type="float">
+			<desc>Calculate a dewpoint from a relative humidity and temperature, calibrated to be more acurate at extreme cold situations</desc>
+			<input name="t" type="float"><desc>Temperature in Kelvin</desc></input>
+			<input name="rh" type="float"><desc>Relative humidity in %</desc></input>
+		</method>
+		<method name="e_calc" type="void">
+			<desc>Not Currently Implemented</desc>
+		</method>
+		<method name="c2f" type="float">
+			<desc>Convert a celsius temperature to fahrenheit</desc>
+			<input name="t" type="float"><desc>Temperature in celsius</desc></input>
+		</method>
+		<method name="f2c" type="float">
+			<desc>Convert a fahrenheit temperature to celsius</desc>
+			<input name="t" type="float"><desc>Temperature in fahrenheit</desc></input>
+		</method>
+		<method name="moist_adiabat" type="float">
+			<desc>Calculate the apparent tephigram temperature for theta-e (tmp) at pressure level (pres). Calculated using the approximation from Wallace and Hobbes</desc>
+			<input name="tmp" type="float"><desc>temperature in the unit specified by kc (theta-e)</desc></input>
+			<input name="pres" type="float"><desc>pressure in hPa</desc></input>
+			<input name="kc" type="str"><desc>"k" if the temperature is input in Kelvin, else temperature is assumed in C</desc></input>
+		</method>
+		<method name="ws" type="float">
+			<desc>Calculate saturation mixing ratio - which is purely a function of saturation vapor pressure es(t) and pressure (p)</desc>
+			<input name="t" type="float"><desc>a temperature in kelvin</desc></input>
+			<input name="pres" type="float"><desc>Pressure in hPa</desc></input>
+		</method>
+		<method name="es" type="float">
+			<desc>Calculate the saturation vapor pressure for a temperature. Uses Clasius-Clapeyron equation. returns Pa</desc>
+			<input name="t" type="float"><desc>temperature in Kelvin</desc></input>
+		</method>
+		<method name='virt' type='float'>
+			<desc>Calculate the virtual temperature for an observation.</desc>
+			<input name="t" type="float"><desc>Temperature in Kelvin</desc></input>
+			<input name="RH" type="float"><desc>Relative Humidity between 0 - 100</desc></input>
+			<input name="p" type="float"><desc>Pressure in Pa</desc></input>
+		</method>
+		<method name="dry_adiabat" type="float">
+			<desc>Calculate a dry adiabat for a temperature and point. This means that it will calculate a tephigram value for a Theta (t), at pressure level (p)</desc>
+			<input name="temp" type="float"><desc>Theta Temperature in the unit specfied by kc</desc></input>
+			<input name="pres" type="float"><desc>Pressure in hPa</desc></input>
+			<input name="kc" type="str"><desc>"k" if the temperature is input in Kelvin, else temperature is assumed in C</desc></input>
+		</method>
+		<method name="skew" type="float">
+			<desc>Calculate the skewed value of the temperature relative to pressure. Returns a temperature of the same unit as the input temperature</desc>
+			<input name="temp" type="float"><desc>temperature in C or K</desc></input>
+			<input name="pres" type="float"><desc>Pressure in hPa</desc></input>
+			<input name="rate" type="float" default="0.005"><desc>The rate of skew in K per meter (m) in the vertical</desc></input>
+		</method>
+		<method name="skewz" type="float">
+			<desc>Calculate the skewed value of a temperature relative to AMSL height. Returns a tempeature of the same unit as the input temperature</desc>
+			<input name="temp" type="float"><desc>Temperature in C or K</desc></input>
+			<input name="z" type="float"><desc>Height in meters AMSL</desc></input>
+			<input name="rate" type="float" default="0.005"><desc>The rate of skew in K per meter (m) in the vertical</desc></input>
+		</method>
+	</module>
+</module>
+
+<module name="plot_artist">
+	<desc>A collection of utility functions for plotting publishable presentations using various python plotting systems</desc>
+	<module name="mpl">
+		<desc>Plotting utilities to semi-standardize and increase efficiency of plotting using MatPlotLib.</desc>
+		<property name="major_scale" type='dict'>
+			<desc>The scaling factor for the spacing of ticks in minutes. It works by the key is the length in hours, and the value is the distance between ticks, in hours. When the length is less than the following length, that distance is used. For the default (shown blow) if the plot length is 12.5 hours long, major time ticks will be placed every 3 hours. This is because the length, 12.5 is greater than 12, but less than 48, and therefore it will use the sepeartion defined as 12 and above.
+
+Thus, the list can also be viewed as each key, is the length, and from there to the value of the next key, the tick seperation will be that value. 
+
+Here is the default:
+
+\(major_scale = {
+	0    : 1,
+	12   : 3,
+	48   : 6,
+	525  : 12	
+}\)
+
+
+This will be imported as a simple dict object \[plot_artist.mpl.major_scale\] so you can reset the value, and this will change the ticks used in the plots. As well, you can make your own scles of the same format, and simply pass them as the apropriate keyword argument to time plotting functions.</desc>
+		</property>
+		<property name="minor_scale" type="dict">
+			<desc>The scaling factor in the same format as the major_scale, and has the same use.
+			<![CDATA[\(minor_scale = { <br />	0     :   0.5,<br />	12    :   1,<br />	72    :   3<br />}\) ]]></desc>
+		</property>
+		<property name="sub_major_scale" type="dict">
+			<desc> A list in the same format as \[major_scale\] except it defines where major ticks should be located between labeled major ticks.
+			This property cannot be edited at this time, and is set into timeticks() at compile time.
+			</desc>
+		</property>
+		<method name="epoch2mplDate" type="MPL Date">
+			<desc>Convert an epoch time to a matplotlib-specific date strcutre, though this appears to be an integer of some form.</desc>
+			<input name="ep" type="long int"><desc>An Epoch Time</desc></input>
+		</method>
+		<method name="figure" type="MPL Figure">
+			<desc>Create the figure instance for the rest of the plotting. Also attempts to redifne the RC parameters for use of LaTEX.</desc>
+		</method>
+		<method name="init_axis" type="MPL Axis(es)">
+			<desc>Creates the axes for the plot, using the axes artist. Again, this could be easily done without this code, the code simply standardizes the operation.</desc>
+			<input name="rows" type="int"><desc>The number of rows in the figure (a subplot character)</desc></input>
+			<input name="cols" type="int"><desc>The number of columns in the figure (a subplot character)</desc></input>
+			<input name="i" type="int"><desc>The postition in the figure of rows x cols (a subplot character)</desc></input>
+			<input name="twin" type="bool" default="False"><desc>Instruct if there should be 1 set of axes returned, or two. Two axes gives control of all four sides of the plot individually. If called, the fuction will return the tuple: ax1,ax2</desc></input>
+		</method>
+		<class name="mstTZ">
+			<desc>A repeat of the mstTZ class found in the core UTDewey module</desc>
+			<init></init>
+		</class>
+		<class name="utcTZ">
+			<desc>A repeat of the mstTZ class found in the UTDewey core module - except that the configuration is for UTC, and not MST. No DST</desc>
+			<init></init>
+		</class>
+		<method name="ttUTC" type="void">
+			<desc>This uses the timeticks() method to create timeticks for the predefined UTC timezone. It simply wraps a bigger function in some niceties. This fucntion is defined as requesting for the date to be plotted at every 12 and 00 UTC. Should you want a different behavior, you will have to call timeticks directly.</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the ticks should be placed</desc></input>
+			<input name="xy" type="str"><desc>"x" for x axis, and anything else for y axis - the specific axis on which plotting should occur - this method only does one axis at a time</desc></input>
+			<input name="begin" type="long int"><desc>The begging epoch time of the plotted interval. Ticks will be placed neatly within this range</desc></input>
+			<input name="end" type="long int"><desc>The end epoch time of the plotted interval.</desc></input>
+			<input name="ms" type='dict' default='major_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable major_scale, which can be modified before runtime</desc></input>
+			<input name="mns" type='dict' default='minor_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable mainor_scale, which can be modified before runtime</desc></input>
+		</method>
+		<method name="ttMST" type="void">
+			<desc>This uses the timeticks() method to create timeticks for the predefined MST timezone. Times are however, assigned on a UTC-neatness basis. IE, if the time interval is such that 3 hour intervals are used, it will plot the MST time at 3Z, 6Z, 9Z, etc.</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the ticks should be placed</desc></input>
+			<input name="xy" type="str"><desc>"x" for x axis, and anything else for y axis - the specific axis on which plotting should occur - this method only does one axis at a time</desc></input>
+			<input name="begin" type="long int"><desc>The begging epoch time of the plotted interval. Ticks will be placed neatly within this range</desc></input>
+			<input name="end" type="long int"><desc>The end epoch time of the plotted interval.</desc></input>
+			<input name="ms" type='dict' default='major_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable major_scale, which can be modified before runtime</desc></input>
+			<input name="mns" type='dict' default='minor_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable mainor_scale, which can be modified before runtime</desc></input>
+		</method>
+		<method name="timeticks" type="void">
+			<desc>Computes ideal tzone-based time ticks for plots using Epcoh time as the time unit. This creates a list of ticks needed, assosciates them with labels, and calles customTick() to plot the ticks.</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the ticks should be placed</desc></input>
+			<input name="xy" type="str"><desc>"x" for x axis, and "y" for y axis - the specific axis on which plotting should occur - this method only does one axis at a time</desc></input>
+			<input name="tzone" type="tzinfo"><desc>A tzinfo object indicating the timezone of the time ticks. Ticks will still be located based on UTC primary times. However, tick labels will be in the specified timezone</desc></input>
+			<input name="begin" type="long int"><desc>The begging epoch time of the plotted interval. Ticks will be placed neatly within this range</desc></input>
+			<input name="end" type="long int"><desc>The end epoch time of the plotted interval.</desc></input>
+			<input name="days" type="bool" default="False"><desc>Wether or not to write the full date at 0 and 12 hours (not explicitly UTC) this is beset used with UTC only, as other formats are not guaranteed to ever intersect with 0/12.</desc></input>
+			<input name="major_scale" type='dict' default='major_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable major_scale, which can be modified before runtime</desc></input>
+			<input name="minor_scale" type='dict' default='minor_scale'><desc>The scaling factor for major ticks. Defaults to the attirbute variable mainor_scale, which can be modified before runtime</desc></input>
+		</method>
+
+		<method name="customTick" type="void">
+			<desc>Given a set of values and labels, as well as any minor ticks, this will plot the ticks on the axis specified by ax and xy.</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the ticks should be placed</desc></input>
+			<input name="xy" type="str"><desc>"x" for x axis, and anything else for y axis - the specific axis on which plotting should occur - this method only does one axis at a time</desc></input>
+			<input name="vals" type="list"><desc>Values on the specified axis where ticks should be placed</desc></input>
+			<input name="labels" type="list"><desc>The label that should be assosciated with each value. len(labels) should = len(values)</desc></input>
+			<input name="minor" type="list" defalut="False"><desc>If minor ticks are desired, list of axis values where smaller minor ticks will be located. No labels</desc></input>
+		</method>
+		<method name="label_x" type="void">
+			<desc>Apply a label to the x axis</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the label should be made</desc></input>
+			<input name="label" type="str"><desc>The label string</desc></input>
+		</method>
+		<method name="label_y" type="void">
+			<desc>Apply a label to the y axis</desc>
+			<input name="ax" type="MPL Axis"><desc>The axis instance on which the label should be made</desc></input>
+			<input name="label" type="str"><desc>The label string</desc></input>
+		</method>
+		<method name="colbar_ceilometer" type="void">
+			<desc>Create a colorbar that is calibrated to the ceilometer - simply in that it places the units on the bar. Produces a horizontal colorbar below the image with an aspect ratio of 40, and a vertical fraction of 0.04 of the total image.</desc>
+			<input name="fig" type="MPL Figure"><desc>The current figure, possibly that created by figure()</desc></input>
+			<input name="data" type="MPL Contour Data"><desc>The data info created by \[data = ax.plot(ceilometer)\]</desc></input>
+		</method>
+		<method name="fig_size" type="void">
+			<desc>Set the size of the figure before saving. This enables the specification of figure size for future insertion in documents.</desc>
+			<input name="fig" type="MPL Figure"><desc>The current figure, possibly that created by figure()</desc></input>
+			<input name="x" type="int"><desc>Image width in inches</desc></input>
+			<input name="y" type="int"><desc>Image height in inches</desc></input>
+		</method>
+		<method name="ep2num" type="long int">
+			<desc>A null function wich replaced the md.epoch2num function, when the conversion was made to use epoch instead of mpl time objects. Simply the input value is returned</desc>
+			<input name="num" type="long int"><desc>Any value</desc></input>
+		</method>
+		<method name="tick" type="void">
+			<desc>deprecated</desc>
+		</method>
+		<method name="TimeUTC3hr" type="void">
+			<desc>deprecated</desc>
+		</method>
+		<method name="TimeUTC6hr" type="void">
+			<desc>deprecated</desc>
+		</method>
+		<method name="TimeMST3hr" type="void">
+			<desc>deprecated</desc>
+		</method>
+		<method name="TimeMST6hr" type="void">
+			<desc>deprecated</desc>
+		</method>
+	</module>
+
+</module>
+
+</document>
+
