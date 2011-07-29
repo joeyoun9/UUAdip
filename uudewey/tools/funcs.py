@@ -17,4 +17,6 @@ def flip2d(self, wrong):
 			right[c][i] = v
 			c+=1
 		i+=1
-	return right	
+	return right
+
+	
