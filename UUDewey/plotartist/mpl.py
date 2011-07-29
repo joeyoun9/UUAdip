@@ -19,6 +19,7 @@ from matplotlib import rc
 #from pylab import *
 import math
 from datetime import tzinfo,timedelta,date,datetime
+from . import timezones as tz
 
 def epoch2mplDate(ep):
 	return md.epoch2num(ep)
@@ -45,28 +46,6 @@ def init_axis_gs (plt,gs,twin=False,sharex=False):
 		return ax,ax.twin()
 	else:
 		return ax
-class mstTZ(tzinfo):
-	# expand the tzinfo class to make a MST timezone object
-	def __init__(self):
-		pass
-	def tzname(self, dt):
-		return "MST"
-	def utcoffset(self,dt):
-		return timedelta(hours=-7)
-	def dst(self, dt):
-		return timedelta(0) # i care not for DST
-
-class utcTZ(tzinfo):
-	# also expland tzonfo to create a UTC timezone object
-	def __init__(self):
-		pass
-	def tzname(self, dt):
-		return "UTC"
-	def utcoffset(self,dt):
-		return timedelta(hours=0)
-	def dst(self, dt):
-		return timedelta(0) # i care not for DST
-
 # a new way to deal with times, simply use epoch times, and figure it out from there
 major_scale = {
 	0      : .5,
@@ -97,13 +76,16 @@ sub_major_scale = {
 }
 """ the tt functions allow you to call a tiemzone specific function, without having to import tzinfo"""
 def ttUTC(ax,xy,begin,end,ms=major_scale,mns=minor_scale):
-	timeticks(ax,xy,utcTZ(),begin,end,days=True,major_scale=ms,minor_scale=mns)
+	timeticks(ax,xy,tz.utcTZ(),begin,end,days=True,major_scale=ms,minor_scale=mns)
 
 def ttMST(ax,xy,begin,end,ms=major_scale,mns=minor_scale):
-	timeticks(ax,xy,mstTZ(),begin,end,major_scale=ms,minor_scale=mns)
+	timeticks(ax,xy,tz.mstTZ(),begin,end,major_scale=ms,minor_scale=mns)
 
 
 def timeticks(ax,xy,tzone,begin,end,days=False,major_scale=major_scale,minor_scale=minor_scale):
+	"""
+		
+	"""
 	# determine the epoch values of time ticks in UTC, and then their lables
 	# remember to label the date if a new day! #FIXME - only accepts hours
 	epochs = []
@@ -138,7 +120,8 @@ def timeticks(ax,xy,tzone,begin,end,days=False,major_scale=major_scale,minor_sca
 		while bhr % major_ticks != 0:
 			bhr += 1.
 			time += 3600.
-		# repeat for minor axis ticks
+
+	# repeat for minor axis ticks
 	time_minor = begin
 	if minor_ticks > 0.5:
 		bhr = datetime.fromtimestamp(begin,tz=tzone).hour
@@ -149,7 +132,7 @@ def timeticks(ax,xy,tzone,begin,end,days=False,major_scale=major_scale,minor_sca
 	# now time is the epoch time of the starting hour, 
 	# use the duration to determine how far between major/minor ticks should be
 	# define the epochs and labels lists using the major_ticks as the spacing
-	while time <= end:  ##WRONG - have tick at end! ##it is bad to have a tick right at the end, so not <=
+	while time <= end:  ## Put ticks everywhere, including at the ends if they are good.
 		#WRONG - if beginning plot!!# time should start at the first 0/3/6/9/etc - however, skip the first one if it is also the beginning
 		#if time == begin:
 		#	time += major_ticks * 3600
@@ -177,67 +160,6 @@ def timeticks(ax,xy,tzone,begin,end,days=False,major_scale=major_scale,minor_sca
 		minis.append(time_minor)
 		time_minor += minor_ticks * 3600.
 	customTick(ax,xy,epochs,labels,minis)
-
-
-# FIXME - find a way to get a minor locator!!
-def TimeUTC3hr(axis):
-	loc = md.HourLocator(interval=3,tz=utcTZ())
-	fmt = md.AutoDateFormatter(loc)
-	fmt.scaled = {
-	365.0 : r"%Y",
-	30.   : r"%b %Y",
-	1.    : r"%H:%M\linebreak%d %b %Y",
-	1/24. : r"%H:%M"
-	}
-	# set the axes
-	axis.set_major_formatter(fmt)
-	axis.set_major_locator(loc)
-	print loc
-
-def TimeUTC6hr(axis):
-	loc = md.HourLocator(interval=6,tz=utcTZ())
-	fmt = md.AutoDateFormatter(loc)
-	fmt.scaled = {
-	365.0 : r"%Y",
-	30.   : r"%b %Y",
-	1.    : r"%H:%M\linebreak%d %b %Y",
-	1/24. : r"%H:%M"
-	}
-	# set the axes
-	axis.set_major_formatter(fmt)
-	axis.set_major_locator(loc)
-
-
-def TimeMST3hr(axis):
-	loc = md.HourLocator(interval=3,tz=mstTZ())
-	fmt = md.AutoDateFormatter(loc)
-	fmt.scaled = {
-	365.0 : r"%Y",
-	30.   : r"%b %Y",
-	1.    : r"%H:%M",
-	1/24. : r"%H:%M"
-	}
-	# set the axes
-	axis.set_major_formatter(fmt)
-	axis.set_major_locator(loc)
-	print loc
-
-def TimeMST6hr(axis):
-	loc = md.HourLocator(interval=6,tz=mstTZ())
-	loc_minor = md.HourLocator(tz=mstTZ())
-	fmt = md.AutoDateFormatter(loc)
-	fmt.scaled = {
-	365.0 : r"%Y",
-	30.   : r"%b %Y",
-	1.    : r"%H:%M",
-	1/24. : r"%H:%M"
-	}
-	# set the axes
-	axis.set_major_formatter(fmt)
-	axis.set_major_locator(loc)
-	axis.set_minor_locator(loc_minor)
-
-
 
 # now to define ticks!!!
 def tick(axis,interval,minor=False):

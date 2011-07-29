@@ -1,4 +1,6 @@
-#!/usr/local/python
+#!/usr/bin/env python
+
+
 """
 	This python script UTDewey.py, written by Joe Young, March 2011
 	
@@ -25,16 +27,20 @@
 		
 """
 
-from xml.dom.minidom import parse
+
 import time, os, sys, calendar, array, math 
 from math import degrees, atan2
 from time import strftime, gmtime
 from datetime import tzinfo,timedelta,date
 
-version = '2.1.0'
+from xml.dom.minidom import parse
+
+from . import version as vers
+
+version = vers.get_version()
 bounding_box = []
 verbose = True
-class DataRequest:
+class DataFetch:
 	"""All data requests will work through the DataRequest Object"""
 	def __init__(self, project, date_range, *args, **keywords ):
 		# this will evaluate their request and will initialize the request object for the transmission at a later time
@@ -124,7 +130,7 @@ class DataRequest:
 				print """I could not figure out your time range: """+date_range+""" (or it was too large) 
 	Please use the format: 'YYYYMMDDHH to YYYYMMDDHH' OR 'YYYYMMDD' OR 'IOP##'. 
 	Inputs other than these values will not be interpreted.
-"""
+				"""
 				exit()
 
 		# now that we have set dates, we need to figure out what the date is, and convert to epoch
@@ -304,7 +310,7 @@ class DataRequest:
 			i+=1
 		return right	
 					
-class requestDataObject:
+class RequestDataObject:
 	def __init__(self):
 		self.raw_file = False
 		self.make_file = False
@@ -331,26 +337,3 @@ def getText(nodelist):
         if node.nodeType == node.TEXT_NODE:
             rc.append(node.data)
     return ''.join(rc)
-
-
-# plotting utilities, since some of the plotting constructs are a pain
-def newAxis(ax):
-	pass
-
-def _3hourticks(ax):
-	import matplotlib.ticker as tk
-	pass
-
-# this one is especially painful, we have to make a 
-class mstTZ(tzinfo):
-	def __init__(self):
-		pass
-	def tzname(self, dt):
-		return "MST"
-	def utcoffset(self,dt):
-		return timedelta(hours=-7)
-	def dst(self, dt):
-		return timedelta(0) # i care not for DST
-
-def yaxis(ax):
-	pass
