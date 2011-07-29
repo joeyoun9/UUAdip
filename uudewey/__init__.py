@@ -41,7 +41,7 @@ from datetime import tzinfo,timedelta,date
 from xml.dom.minidom import parse
 
 from . import version as vers
-
+from . import tools.funcs as functions
 
 version = vers.get_version()
 bounding_box = []
@@ -302,6 +302,9 @@ class DataFetch:
 			return True
 		else:
 			return False
+
+	funcs = functions
+
 	# define a flipping function, sice I seem to use it somewhat frequently - can be imported elsewhere as well!
 	def flip2d(self, wrong):
 		import numpy as np
