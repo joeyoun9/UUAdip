@@ -3,4 +3,9 @@
 *.pyc
 .pyc
 .*
+<<<<<<< HEAD
 build/
+=======
+*.swp
+
+>>>>>>> i blame github for this
